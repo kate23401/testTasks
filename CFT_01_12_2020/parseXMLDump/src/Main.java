@@ -15,7 +15,7 @@ public class Main {
         File file = new File("data/enwiki-latest-abstract.xml");
         SAXParserFactory factory = SAXParserFactory.newInstance();
         SAXParser parser = factory.newSAXParser();
-        // Складываем файл в HashMap, где ключ title, значение - abstract
+        // Складываем файл в HashMap
         XMLHandler handler = new XMLHandler();
         parser.parse(file, handler);
 
