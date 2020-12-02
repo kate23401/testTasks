@@ -2,14 +2,12 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class XMLHandler extends DefaultHandler {
-    private String title, body, lastElementName;
-    public static HashMap<String, String> parsedPair = new HashMap<>();
+    private String titleNode, abstractNode, lastElementName;
+    public static HashMap<String, ArrayList<String>> parsedPair = new HashMap<>();
 
     @Override
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -24,33 +22,35 @@ public class XMLHandler extends DefaultHandler {
 
         if (!information.isEmpty()) {
             if (lastElementName.equals("title"))
-                title = information;
+                titleNode = information;
             if (lastElementName.equals("abstract"))
-                body = information;
+                abstractNode = information;
         }
     }
 
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
-        if ((title != null && !title.isEmpty()) && (body != null && !body.isEmpty())) {
-            parsedPair.put(title, body);        // Складываем ВСЕ узлы <title> и <abstarct> XML-файла в Map
-            title = null;
-            body = null;
-        }
-    }
+        if ((titleNode != null && !titleNode.isEmpty()) && (abstractNode != null && !abstractNode.isEmpty())) {
+            String str = "\n" + titleNode + "\n" + abstractNode + "\n";
 
-    public ArrayList<String> checkMatchesInNode(String keyWord) {
-        ArrayList<String> resultList = new ArrayList<>();
-        String strPrn = "(.*?\\b)" + keyWord + "(\\b.*?)";
-        Pattern pattern = Pattern.compile(strPrn, Pattern.CASE_INSENSITIVE);
+            // Разбиваем строку  узла <abstract> на слова для ключей в HashMap
+            String[] arr = abstractNode.replace("\\W", "").split(" ");
+            //Чтобы исключить двойную вставку в значение HashMap. Например: A sister group or sister taxon is a phylogenetic term... - два раза повторяется sister
+            arr = Arrays.asList(arr).stream().distinct().toArray(String[]::new);
 
-        for (Map.Entry<String, String> map : parsedPair.entrySet()) {
-            Matcher matcher = pattern.matcher(map.getValue());
-            if (matcher.matches()) {
-                resultList.add(map.getKey() + "\n" + map.getValue());
+            // Складываем ВСЕ узлы <title> и <abstract> XML-файла в HashMap
+            for (String s : arr) {
+                // Если слова из строки узла <abstract> нет в ключах HashMap, то добавляем такой ключ-слово + инициализируем значение HashMap созданием первой записи в ArrayList
+                if (!parsedPair.containsKey(s)) {
+                    ArrayList<String> arrayList = new ArrayList<>();
+                    arrayList.add(str);
+                    parsedPair.put(s, arrayList);
+                } else { //Если слово из строки узла <abstract> есть в HashMap, то находим по ключу значение  - список ArrayList, добавляем в него вторую или последующуюю запись.
+                    parsedPair.get(s).add(str);
+                }
             }
+            titleNode = null;
+            abstractNode = null;
         }
-
-        return resultList;
     }
 }
