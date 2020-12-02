@@ -1,17 +1,15 @@
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class XMLHandler extends DefaultHandler {
-    private String title, body, parseString, lastElementName;
+    private String title, body, lastElementName;
     public static HashMap<String, String> parsedPair = new HashMap<>();
-
-    XMLHandler(String str) {
-        parseString = str;
-    }
 
     @Override
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -28,27 +26,31 @@ public class XMLHandler extends DefaultHandler {
             if (lastElementName.equals("title"))
                 title = information;
             if (lastElementName.equals("abstract"))
-                if (checkMatchesInNode(information)) {
-                    body = information;
-                } else {
-                    title = null;   // Зачистим узел с заголовком
-                }
+                body = information;
         }
     }
 
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
         if ((title != null && !title.isEmpty()) && (body != null && !body.isEmpty())) {
-            parsedPair.put(title, body);
+            parsedPair.put(title, body);        // Складываем ВСЕ узлы <title> и <abstarct> XML-файла в Map
             title = null;
             body = null;
         }
     }
 
-    private boolean checkMatchesInNode(String information) {
-        String strPrn = "(\\s|-)?" + parseString + "(\\s|-)?";      // Маска либо на простое слово, либо на часть составного (Пример: self-made)
-        Pattern pattern = Pattern.compile(strPrn,Pattern.CASE_INSENSITIVE);
-        Matcher matcher = pattern.matcher(information);
-        return matcher.find();
+    public ArrayList<String> checkMatchesInNode(String keyWord) {
+        ArrayList<String> resultList = new ArrayList<>();
+        String strPrn = "(.*?\\b)" + keyWord + "(\\b.*?)";
+        Pattern pattern = Pattern.compile(strPrn, Pattern.CASE_INSENSITIVE);
+
+        for (Map.Entry<String, String> map : parsedPair.entrySet()) {
+            Matcher matcher = pattern.matcher(map.getValue());
+            if (matcher.matches()) {
+                resultList.add(map.getKey() + "\n" + map.getValue());
+            }
+        }
+
+        return resultList;
     }
 }
