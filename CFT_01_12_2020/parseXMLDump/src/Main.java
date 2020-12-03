@@ -10,12 +10,12 @@ public class Main {
 
         // Вычитали файл при первом запуске программы в HashMap
         System.out.println("Вычитываем файл в HashMap - " + LocalTime.now() + "\n"
-                + "Дождитесь окончания записи файла.");
+                + "Загрузка...");
 
         File file = new File("data/enwiki-latest-abstract.xml");
         SAXParserFactory factory = SAXParserFactory.newInstance();
         SAXParser parser = factory.newSAXParser();
-        // Складываем файл в HashMap
+        // Складываем файл в HashMap. Поиск будет быстрым, но это будет занимать много памяти на период выполнения программы
         XMLHandler handler = new XMLHandler();
         parser.parse(file, handler);
 
